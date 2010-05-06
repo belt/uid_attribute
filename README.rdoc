@@ -25,7 +25,7 @@ One method to do this is to use globally unique identifiers within the system to
 
 == Installation
 
- % script/plugin install git://github.com/belt/uid_attribute.git
+ % gem install uid_attribute
 
 == License
 
