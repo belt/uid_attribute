@@ -1,0 +1,37 @@
+= UidAttribute -- Globally Unique Identifiable Attributes
+
+machina to automatically generate UUIDs upon object instantiation.
+
+
+== Example
+
+  require File.join(File.dirname(__FILE__),'lib','uid_attribute')
+
+  class MyObject
+    include UIDAttribute
+
+    attr_accessor :uid
+    uid_attribute :uid  # this is optional e.g. to change the UID attribute
+  end
+
+  puts MyObject.new.uid
+  # => 4981a86e-239c-45dd-b4b3-283c435fb8ad
+
+== Use case
+
+Some projects are confined by regulations (or requirements) that demand data can not be used to identify individuals. In such cases data must be scrubbed i.e. identifiable object names must be removed before unauthorized users can see said data. For example, when a developer needs to recreate a bug on their own system that was reported by a customer using customer-specific data.
+
+One method to do this is to use globally unique identifiers within the system to identify any given object.
+
+== Installation
+
+ % script/plugin install git://github.com/belt/uid_attribute.git
+
+== License
+
+Copyright (c) 2010 [Paul Belt], released under the MIT license
+
+== Support
+
+http://github.com/belt/uid_attribute
+
