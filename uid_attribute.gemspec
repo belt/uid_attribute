@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Paul Belt"]
-  s.date = %q{2010-05-05}
+  s.date = %q{2010-05-06}
   s.description = %q{Some projects are confined by regulations (or requirements) that demand data can not be used to identify individuals. In such cases data must be scrubbed i.e. identifiable object names must be removed before unauthorized users can see said data. For example, when a developer needs to recreate a bug on their own system that was reported by a customer using customer-specific data.
 
 One method to do this is to use globally unique identifiers within the system to identify any given object.}
@@ -31,7 +31,7 @@ One method to do this is to use globally unique identifiers within the system to
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{uid_attribute}
-  s.rubygems_version = %q{1.3.5}
+  s.rubygems_version = %q{1.3.6}
   s.summary = %q{machina to automatically generate UUIDs upon object instantiation.}
   s.test_files = [
     "test/uid_attribute_test.rb"
