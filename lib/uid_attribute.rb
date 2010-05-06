@@ -21,7 +21,6 @@ module ClassMethods
   def uid_attribute(uid_attr = :uid)
     if ancestors.include?('ActiveRecord::Base')
       validates_uniqueness_of uid_attr
-      before_validation :set_uid
     end
 
     class_eval("class << self;attr_accessor :uid_attr;attr_accessor :uid_object; end")
@@ -31,16 +30,9 @@ module ClassMethods
 
 end
 
-if self.class.ancestors.include?('ActiveRecord::Base')
-  def initialize(args) # :nodoc:
-    super args
-    self.set_uid
-  end
-else
-  def initialize # :nodoc:
-    super
-    self.set_uid
-  end
+def initialize(args = {}) # :nodoc:
+  args.empty? ? super() : super(args)
+  set_uid
 end
 
 # :call-seq:
@@ -49,8 +41,7 @@ end
 # This function sets the attribute (as identified by klass.uid_attribute)
 
 def set_uid
-  raise "dev.error: #{self.class}.respond_to?(:#{self.class.uid_attr}) == false" unless self.respond_to?(self.class.uid_attr)
-  #return unless self.send("#{self.class.uid_attr}=").nil?
+  raise "dev.error: #{self.class}.respond_to?(:#{self.class.uid_attr}) == false" unless respond_to?(self.class.uid_attr)
 
   if self.class.uid_object
     uid = UUIDTools::UUID.md5_create(UUIDTools::UUID_OID_NAMESPACE, "#{self.inspect}")
@@ -58,7 +49,7 @@ def set_uid
     uid = UUIDTools::UUID.random_create.to_s
   end
 
-  self.send("#{self.class.uid_attr}=", uid)
+  send("#{self.class.uid_attr}=", uid)
 end
 
 # /module
