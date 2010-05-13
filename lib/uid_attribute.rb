@@ -20,6 +20,7 @@ module ClassMethods
 
   def uid_attribute(uid_attr = :uid)
     if ancestors.collect{|a|a.to_s}.include?('ActiveRecord::Base')
+      validates_presence_of uid_attr
       validates_uniqueness_of uid_attr
     end
 
