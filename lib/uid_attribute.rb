@@ -19,7 +19,7 @@ module ClassMethods
   # This function defines the UID attribute for the klass <tt>(default: :uid)</tt>
 
   def uid_attribute(uid_attr = :uid)
-    if ancestors.include?('ActiveRecord::Base')
+    if ancestors.collect{|a|a.to_s}.include?('ActiveRecord::Base')
       validates_uniqueness_of uid_attr
     end
 
