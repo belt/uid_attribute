@@ -31,8 +31,8 @@ module ClassMethods
 
 end
 
-def initialize(args = {}) # :nodoc:
-  args.empty? ? super() : super(args)
+def initialize(*args) # :nodoc:
+  super(*args)
   set_uid
 end
 
