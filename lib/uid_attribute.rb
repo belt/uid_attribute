@@ -14,26 +14,51 @@ module ClassMethods
   end
 
   # :call-seq:
+  # install_uid_attribute_validators :uid_attr #:nodoc:
+  #
+  # if the including class inherits from ActiveRecord::Base,
+  # then validate Klass.uid_attr is not blank and is unique (within this model)
+
+  def install_uid_attribute_validators(uid_attr)
+    return unless ancestors.collect{|ancestor|
+      ancestor.to_s }.include?('ActiveRecord::Base')
+    validates_presence_of uid_attr
+    validates_uniqueness_of uid_attr
+  end
+
+  # :call-seq:
   # uid_attribute
   #
   # This function defines the UID attribute for the klass <tt>(default: :uid)</tt>
 
   def uid_attribute(uid_attr = :uid)
-    if ancestors.collect{|a|a.to_s}.include?('ActiveRecord::Base')
-      validates_presence_of uid_attr
-      validates_uniqueness_of uid_attr
-    end
+    install_uid_attribute_validators(uid_attr)
 
     class_eval("class << self;attr_accessor :uid_attr;attr_accessor :uid_object; end")
-    @uid_attr = uid_attr
     @uid_object = false
+    protected
+    @uid_attr = uid_attr
   end
 
-end
+end # /class_methods
 
 def initialize(*args) # :nodoc:
-  super(*args)
+  # hyjack including class initializer to set UID too
+  ret = super(*args)
   set_uid
+  ret
+end
+
+# :call-seq:
+# has_uid_accessors?
+#
+# raises errors unless the including class has a setter and getter for Klass.uid_attr
+
+def has_uid_accessors?
+  klass = self.class
+  uid_attr = klass.uid_attr
+  raise "dev.error: #{klass}.respond_to?(:#{uid_attr}) == false" unless respond_to?(uid_attr)
+  raise "dev.error: #{klass}.respond_to?(:#{uid_attr}=) == false" unless respond_to?("#{uid_attr}=")
 end
 
 # :call-seq:
@@ -42,17 +67,13 @@ end
 # This function sets the attribute (as identified by klass.uid_attribute)
 
 def set_uid
-  raise "dev.error: #{self.class}.respond_to?(:#{self.class.uid_attr}) == false" unless respond_to?(self.class.uid_attr)
+  klass = self.class
+  has_uid_accessors?
 
-  if self.class.uid_object
-    uid = UUIDTools::UUID.md5_create(UUIDTools::UUID_OID_NAMESPACE, "#{self.inspect}")
-  else
-    uid = UUIDTools::UUID.random_create.to_s
-  end
+  uid = klass.uid_object ? UUIDTools::UUID.md5_create(UUIDTools::UUID_OID_NAMESPACE, self.inspect) : UUIDTools::UUID.random_create.to_s
 
-  send("#{self.class.uid_attr}=", uid)
+  send("#{klass.uid_attr}=", uid)
 end
 
-# /module
-end
+end # /module
 
