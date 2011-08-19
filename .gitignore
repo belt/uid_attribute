@@ -1,4 +1,8 @@
+.*.swp
+*.gem
+.bundle
 coverage/
 coverage.data
-.*.swp
+Gemfile.lock
+pkg/*
 

@@ -1,4 +1,4 @@
-= UidAttribute -- Globally Unique Identifiable Attributes
+= UIDAttribute -- Globally Unique Identifiable Attributes
 
 machina to automatically generate UUIDs upon object instantiation.
 
