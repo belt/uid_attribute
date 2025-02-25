@@ -1,0 +1,15 @@
+# mise.toml — uid_attribute gem
+# Project-scoped tool versions and environment
+min_version = "2025.1.0"
+
+[tools]
+ruby = "3.4.9"
+
+[env]
+# Force Apple Clang for Ruby builds — Homebrew LLVM lacks
+# RUBY_FUNCTION_NAME_STRING, causing vm_callinfo.h failures
+CC = "/usr/bin/clang"
+CXX = "/usr/bin/clang++"
+
+# jemalloc tuning (optimal for Ruby workloads)
+MALLOC_CONF = "dirty_decay_ms:1000,narenas:2"

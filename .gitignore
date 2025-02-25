@@ -1,8 +1,25 @@
-.*.swp
+# Gem build artifacts
 *.gem
-.bundle
-coverage/
-coverage.data
+pkg/
 Gemfile.lock
-pkg/*
 
+# Coverage
+coverage/
+
+# RubyCritic reports
+tmp/rubycritic/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Ruby
+tmp/
+rdoc/
+doc/
+
+# Bundler
+.bundle/

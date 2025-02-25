@@ -1,25 +1,37 @@
-# -*- encoding: utf-8 -*-
-$:.push File.expand_path('../lib', __FILE__)
-require 'uid_attribute/version'
+# frozen_string_literal: true
 
-Gem::Specification.new do |s|
-  s.name        = 'uid_attribute'
-  s.version     = UIDAttribute::VERSION
-  s.authors     = ['Paul Belt']
-  s.email       = ['paul.belt@gmail.com']
-  s.homepage    = %q{http://github.com/belt/uid_attribute}
-  s.summary     = %q{machina to automatically generate UIDs upon object instantiation}
-  s.description = %q{Some projects are confined by regulations (or requirements) that demand data can not be used to identify individuals. In such cases data must be scrubbed i.e. identifiable object names must be removed before unauthorized users can see said data. For example, when a developer needs to recreate a bug on their own system that was reported by a customer using customer-specific data.
+require_relative "lib/uid_attribute/version"
 
-One method to do this is to use globally unique identifiers within the system to identify any given object.}
+Gem::Specification.new do |spec|
+  spec.name = "uid_attribute"
+  spec.version = UidAttribute::VERSION
+  spec.authors = ["Paul Belt"]
+  spec.email = ["153964+belt@users.noreply.github.com"]
 
-  s.rubyforge_project = 'uid_attribute'
+  spec.summary = "Auto-assign UUIDs (v4 / v7) to PORO and ActiveRecord attributes."
+  spec.description = <<~DESC
+    Auto-generates a UUID for a designated attribute (default :uid) on
+    instantiation. Defaults to UUID v7 (RFC 9562) — time-ordered and
+    index-friendly — with v4 available. Works with PORO via Poro mixin
+    and ActiveRecord via ActiveRecordIntegration. Includes a standalone
+    generator, ActiveModel custom type, and opt-in refinements.
+  DESC
+  spec.homepage = "https://github.com/belt/uid_attribute"
+  spec.license = "MIT"
+  spec.required_ruby_version = ">= 3.4.0"
+  spec.required_rubygems_version = ">= 3.6"
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {spec}/*`.split("\n")
-  s.require_paths = ['lib']
+  spec.metadata = {
+    "homepage_uri" => spec.homepage,
+    "source_code_uri" => "https://github.com/belt/uid_attribute",
+    "changelog_uri" => "https://github.com/belt/uid_attribute/blob/main/CHANGELOG.md",
+    "bug_tracker_uri" => "https://github.com/belt/uid_attribute/issues",
+    "rubygems_mfa_required" => "true"
+  }
 
-  s.add_development_dependency 'rspec'
-  s.add_runtime_dependency 'uuidtools'
+  spec.files = Dir["lib/**/*.rb", "LICENSE", "README.md", "CHANGELOG.md"]
+  spec.require_paths = ["lib"]
+
+  spec.add_dependency "activemodel", ">= 7.2"
+  spec.add_dependency "activesupport", ">= 7.2"
 end
-
