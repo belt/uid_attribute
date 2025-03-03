@@ -1,5 +1,5 @@
-# UIDAttribute version
-module UIDAttribute
-  VERSION = '0.3.0'
-end
+# frozen_string_literal: true
 
+module UidAttribute
+  VERSION = "1.0.0"
+end
