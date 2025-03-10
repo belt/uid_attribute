@@ -1,86 +1,36 @@
-require "uid_attribute/version"
-require 'uuidtools'
+# frozen_string_literal: true
 
-module UIDAttribute
+require_relative "uid_attribute/version"
+require_relative "uid_attribute/generator"
+require_relative "uid_attribute/error"
 
-def self.included( klass ) # :nodoc:
-  klass.extend ClassMethods
-  klass.send(:install_uid_attribute)
-end
-
-module ClassMethods
-  include UUIDTools
-
-  # :call-seq:
-  # uid_attribute
-  #
-  # This function defines the UID attribute for the klass <tt>(default: :uid)</tt>
-
-  def uid_attribute(uid_attr = :uid)
-    install_uid_attribute_validators(uid_attr)
-
-    class_eval("class << self;attr_accessor :uid_attr;attr_accessor :uid_object; end")
-    @uid_object = false
-    protected
-    @uid_attr = uid_attr
-  end
-
-protected
-
-  def install_uid_attribute #:nodoc:
-    uid_attribute
-  end
-
-  # :call-seq:
-  # install_uid_attribute_validators :uid_attr
-  #
-  # if the including class inherits from ActiveRecord::Base,
-  # then validate Klass.uid_attr is not blank and is unique (within this model)
-
-  def install_uid_attribute_validators(uid_attr) #:nodoc:
-    return unless ancestors.collect{|ancestor|
-      ancestor.to_s }.include?('ActiveRecord::Base')
-    validates_presence_of uid_attr
-    validates_uniqueness_of uid_attr
-  end
-
-end # /class_methods
-
-def initialize(*args) # :nodoc:
-  # hyjack including class initializer to set UID too
-  ret = super(*args)
-  set_uid
-  ret
-end
-
-# :call-seq:
-# set_uid
+# UidAttribute — auto-assign UUIDs (v4 / v7) to PORO and ActiveRecord
+# attributes. Defaults to UUID v7 per RFC 9562 — time-ordered and
+# index-friendly.
 #
-# set :uid_attribute
-
-def set_uid
-  klass = self.class
-  has_uid_accessors?
-
-  uid = klass.uid_object ?  UUIDTools::UUID.md5_create(UUIDTools::UUID_OID_NAMESPACE, self.inspect) :
-    UUIDTools::UUID.random_create.to_s
-
-  send("#{klass.uid_attr}=", uid)
-end
-
-protected
-
-# :call-seq:
-# has_uid_accessors?
+# @example PORO
+#   class Job
+#     include UidAttribute::Poro
+#     attr_accessor :uid
+#   end
 #
-# raises errors unless the including class has a setter and getter for Klass.uid_attr
-
-def has_uid_accessors?
-  klass = self.class
-  uid_attr = klass.uid_attr
-  raise "dev.error: #{klass}.respond_to?(:#{uid_attr}) == false" unless respond_to?(uid_attr)
-  raise "dev.error: #{klass}.respond_to?(:#{uid_attr}=) == false" unless respond_to?("#{uid_attr}=")
+#   Job.new.uid  # => "018f4d9c-7a8b-7000-9b2a-1c3d4e5f6a7b"
+#
+# @example ActiveRecord
+#   class Order < ActiveRecord::Base
+#     include UidAttribute::ActiveRecordIntegration
+#   end
+#
+# @example Generator only
+#   UidAttribute::Generator.generate              # => v7
+#   UidAttribute::Generator.generate(version: 4)  # => v4
+#
+module UidAttribute
+  # Load on demand — no hard ActiveRecord dependency at require time.
+  autoload :ActiveRecordIntegration, "uid_attribute/active_record_integration"
+  autoload :CoreExt, "uid_attribute/core_ext"
+  autoload :Poro, "uid_attribute/poro"
+  autoload :Type, "uid_attribute/type"
 end
 
-end # /module
-
+require_relative "uid_attribute/railtie" if defined?(Rails::Railtie)
