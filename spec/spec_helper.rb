@@ -1,25 +1,31 @@
-begin; require 'cover_me'; rescue LoadError; end
-require 'rubygems'
-require 'rspec'
-#require 'rr'
-#require 'spec/rr'  # not updated to rspec-2
+# frozen_string_literal: true
 
-begin; require 'database_cleaner'; rescue LoadError; end
-
-# Capybara defaults to XPath selectors rather than Webrat's default of CSS3. In
-# order to ease the transition to Capybara we set the default here. If you'd
-# prefer to use XPath just remove this line and adjust any selectors in your
-# steps to use the XPath syntax.
-# Capybara.default_selector = :css
-
-RSpec.configure do |config|
-  # == Mock Framework
-  #
-  # If you prefer to use mocha, flexmock or RR, uncomment the appropriate line:
-  #
-  # config.mock_with :mocha
-  # config.mock_with :flexmock
-  # config.mock_with :rr
-  config.mock_with :mocha
+require "simplecov"
+SimpleCov.start do
+  add_filter "/spec/"
+  enable_coverage :branch
+  minimum_coverage line: 90, branch: 70
 end
 
+require "uid_attribute"
+
+Dir[File.join(__dir__, "support", "**", "*.rb")].each { |f| require f }
+
+RSpec.configure do |config|
+  config.expect_with :rspec do |expectations|
+    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+  end
+
+  config.mock_with :rspec do |mocks|
+    mocks.verify_partial_doubles = true
+  end
+
+  config.shared_context_metadata_behavior = :apply_to_host_groups
+  config.filter_run_when_matching :focus
+  config.disable_monkey_patching!
+  config.warnings = true
+  config.default_formatter = "doc" if config.files_to_run.one?
+  config.profile_examples = 3
+  config.order = :random
+  Kernel.srand config.seed
+end
