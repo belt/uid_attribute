@@ -1,0 +1,12 @@
+---
+# RubyCritic configuration — combined quality report (reek + flay + flog)
+# Output: tmp/rubycritic/overview.html
+
+paths:
+  - lib/
+
+no_browser: true
+
+# Thresholds (fail CI if exceeded)
+# A = 0-2, B = 2-4, C = 4-8, D = 8-16, F = 16+
+minimum_score: 90

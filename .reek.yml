@@ -1,0 +1,71 @@
+---
+# Reek configuration — code smell detection
+
+exclude_paths:
+  - spec
+
+detectors:
+  TooManyStatements:
+    max_statements: 15
+    exclude:
+      - "UidAttribute::ActiveRecordIntegration"
+      - "UidAttribute::Poro"
+
+  UncommunicativeVariableName:
+    exclude:
+      - "UidAttribute::Generator"
+
+  # uuid_v7 / uuid_version mirror SecureRandom + RFC 9562 vocabulary
+  UncommunicativeMethodName:
+    exclude:
+      - "UidAttribute::Generator"
+
+  UtilityFunction:
+    exclude:
+      - "UidAttribute::Generator"
+      - "UidAttribute::Type"
+
+  NilCheck:
+    exclude:
+      - "UidAttribute::Poro"
+      - "UidAttribute::Type"
+
+  ControlParameter:
+    exclude:
+      - "UidAttribute::Generator"
+      - "UidAttribute::Poro"
+      - "UidAttribute::ActiveRecordIntegration"
+
+  BooleanParameter:
+    exclude:
+      - "UidAttribute::ActiveRecordIntegration"
+
+  TooManyConstants:
+    exclude:
+      - "UidAttribute::Generator"
+
+  # respond_to? checks are required to support both AR columns and
+  # ActiveModel attributes; PORO must verify host-defined accessors.
+  ManualDispatch:
+    exclude:
+      - "UidAttribute::ActiveRecordIntegration"
+      - "UidAttribute::Poro"
+
+  # AR class-level state lookup and PORO accessor checks read the
+  # same call sites; extracting locals would obscure intent.
+  DuplicateMethodCall:
+    exclude:
+      - "UidAttribute::ActiveRecordIntegration"
+      - "UidAttribute::Poro"
+
+  # Poro deliberately wraps host #initialize — that's the contract.
+  ModuleInitialize:
+    exclude:
+      - "UidAttribute::Poro"
+
+  IrresponsibleModule:
+    exclude:
+      - "UidAttribute::Poro::ClassMethods"
+
+  UnusedPrivateMethod:
+    enabled: false
