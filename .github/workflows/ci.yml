@@ -1,0 +1,79 @@
+# CI — lint, test matrix, audit.
+#
+# Actions pinned to full SHA for supply-chain safety.
+# Concurrency: cancel stale runs on same branch/PR.
+#
+# Matrix: Ruby 3.4 + 4.0 × ActiveRecord 7.2 + 8.1
+# AR_VERSION env var pins activerecord/activesupport in Gemfile.
+---
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "spec/**"
+      - "Gemfile"
+      - "uid_attribute.gemspec"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "spec/**"
+      - "Gemfile"
+      - "uid_attribute.gemspec"
+      - ".github/workflows/ci.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec standardrb --no-fix
+      - run: bundle exec reek lib/
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.4", "4.0"]
+        ar: ["7.2", "8.1"]
+        exclude:
+          - ruby: "4.0"
+            ar: "7.2"
+    env:
+      AR_VERSION: ${{ matrix.ar }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rspec
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - run: bundle exec bundler-audit check --update
