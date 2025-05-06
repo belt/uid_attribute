@@ -1,0 +1,98 @@
+name: Bug Report
+description: Report a bug in uid_attribute
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the sections below
+        so we can reproduce and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal code or steps to trigger the bug.
+      placeholder: |
+        ```ruby
+        class Order < ActiveRecord::Base
+          include UidAttribute::ActiveRecordIntegration
+        end
+
+        Order.create!.uid
+        # => unexpected result or error
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error Output
+      description: Paste any error messages, backtraces, or logs.
+      render: text
+
+  - type: input
+    id: gem-version
+    attributes:
+      label: uid_attribute Version
+      placeholder: "e.g. 1.0.0 or commit SHA"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ruby-version
+    attributes:
+      label: Ruby Version
+      options:
+        - "3.4"
+        - "4.0"
+        - Other (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: integration
+    attributes:
+      label: Integration Surface
+      description: Where is the bug occurring?
+      options:
+        - "ActiveRecord (ActiveRecordIntegration mixin)"
+        - "PORO (Poro mixin)"
+        - "Generator (standalone)"
+        - "Type (ActiveModel::Type)"
+        - "CoreExt (refinements)"
+        - "Railtie / Rails autoload"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: rails-version
+    attributes:
+      label: Rails / ActiveRecord Version
+      description: If applicable.
+      placeholder: "e.g. 7.2.2 or 8.1.0"
+
+  - type: dropdown
+    id: uuid-version
+    attributes:
+      label: UUID Version Configured
+      options:
+        - "v7 (default)"
+        - "v4"
+        - "Mixed / not applicable"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Anything else that might help (database, related gems, deployment).

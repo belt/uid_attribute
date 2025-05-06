@@ -1,0 +1,7 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: https://github.com/belt/uid_attribute/security/advisories/new
+    about: >-
+      Report security vulnerabilities through GitHub Security
+      Advisories. Do not open a public issue.
