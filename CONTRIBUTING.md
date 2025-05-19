@@ -27,7 +27,11 @@ All participants are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md
 git clone https://github.com/belt/uid_attribute.git
 cd uid_attribute
 bundle install
+git config core.hooksPath .githooks
 ```
+
+The last command activates the version-controlled pre-push hook
+that runs the same checks as CI.
 
 If you use [`mise`](https://mise.jdx.dev), the toolchain is pinned in
 `.mise.toml`. Run `mise trust` once on the repo root.
@@ -107,6 +111,9 @@ instructions.
 ## Project Layout
 
 ```text
+.githooks/
+  pre-push                  # CI parity gate when pushing to main
+
 lib/uid_attribute/
   generator.rb              # SecureRandom-backed v4/v7 generator
   active_record_integration.rb  # AR mixin (convention-driven)
