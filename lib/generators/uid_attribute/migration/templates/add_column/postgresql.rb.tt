@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+# Adds a UUID column to <%= table_name %> using PostgreSQL's native :uuid type.
+#
+# Production-safe pattern (zero-downtime):
+#   1. Add column nullable, no default — instant in PG 11+.
+#   2. Backfill in batches via a separate migration (--backfill).
+#   3. Add unique index CONCURRENTLY (no AccessExclusive lock).
+#   4. After verifying coverage, mark NOT NULL via change_column_null.
+#
+# References:
+#   - https://www.postgresql.org/docs/current/datatype-uuid.html
+#   - https://www.postgresql.org/docs/current/sql-createindex.html (CONCURRENTLY)
+class <%= add_column_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+<% if concurrent? -%>
+  disable_ddl_transaction!
+
+<% end -%>
+  def up
+    safety_assured do
+      add_column :<%= table_name %>, :<%= column_name %>, :uuid unless column_exists?(:<%= table_name %>, :<%= column_name %>)
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>,
+      unique: true,
+      <%= concurrent? ? "algorithm: :concurrently,\n      " : "" -%>if_not_exists: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+  end
+
+  def down
+    if index_exists?(:<%= table_name %>, :<%= column_name %>, name: "index_<%= table_name %>_on_<%= column_name %>")
+      remove_index :<%= table_name %>, name: "index_<%= table_name %>_on_<%= column_name %>"<%= concurrent? ? ", algorithm: :concurrently" : "" %>
+    end
+    remove_column :<%= table_name %>, :<%= column_name %> if column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+
+  private
+
+  # Stub for compatibility with strong_migrations; no-op when the gem is absent.
+  def safety_assured
+    if respond_to?(:strong_migrations_safety_assured, true)
+      strong_migrations_safety_assured { yield }
+    else
+      yield
+    end
+  end
+end

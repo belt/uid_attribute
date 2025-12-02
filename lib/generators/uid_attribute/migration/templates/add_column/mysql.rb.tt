@@ -1,0 +1,34 @@
+# frozen_string_literal: true
+
+# Adds a UUID column to <%= table_name %>.
+#
+# MySQL storage: <%= mysql_binary16? ? "BINARY(16) — 16 bytes, denser, requires HEX/UNHEX for human-readable IO" : "CHAR(36) — 36 bytes, round-trips with UidAttribute::Generator" %>.
+#
+# Production-safe pattern (MySQL 8.0+):
+#   - InnoDB online DDL: ALGORITHM=INPLACE, LOCK=NONE works for nullable
+#     column adds. Default is INSTANT for column adds since 8.0.12.
+#   - Backfill in batches via a separate migration (--backfill).
+#   - Unique index add: ALGORITHM=INPLACE, LOCK=SHARED on InnoDB.
+#
+# Notes for older MySQL / Trilogy / heavy write traffic:
+#   - Use pt-online-schema-change or gh-ost for tables > 100M rows.
+#   - Wrap manually if you need explicit ALGORITHM/LOCK hints.
+class <%= add_column_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+  def up
+    unless column_exists?(:<%= table_name %>, :<%= column_name %>)
+      add_column :<%= table_name %>, :<%= column_name %>, :<%= mysql_binary16? ? "binary, limit: 16" : "string, limit: 36" %>
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>,
+      unique: true,
+      if_not_exists: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+  end
+
+  def down
+    if index_exists?(:<%= table_name %>, :<%= column_name %>, name: "index_<%= table_name %>_on_<%= column_name %>")
+      remove_index :<%= table_name %>, name: "index_<%= table_name %>_on_<%= column_name %>"
+    end
+    remove_column :<%= table_name %>, :<%= column_name %> if column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+end

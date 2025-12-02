@@ -1,0 +1,47 @@
+Description:
+    Generate a UUID column migration. Detects your database adapter
+    and emits production-safe migrations.
+
+Adapters:
+    postgresql  → native :uuid column, concurrent unique index
+    mysql       → CHAR(36) (default) or BINARY(16)
+    sqlite      → TEXT column with unique index
+    cassandra   → CQL files under db/cql_migrate/
+    mongoid     → Mongoid::Migration under db/mongo_migrate/
+    dynamodb    → aws-sdk script under db/dynamodb_migrate/
+    couchdb     → HTTP API script under db/couchdb_migrate/
+
+Modes (--mode):
+    add_column      Add a UUID column/attribute (default).
+    new_table       Create a new table/collection/database with UUID.
+    promote_to_pk   Migrate an integer primary key to UUID.
+                    Relational adapters only (postgresql, mysql, sqlite).
+
+Examples:
+    bin/rails generate uid_attribute:migration Order
+    bin/rails generate uid_attribute:migration Order --uuid-version=4
+    bin/rails generate uid_attribute:migration Order --column=public_id
+    bin/rails generate uid_attribute:migration Order --backfill
+    bin/rails generate uid_attribute:migration Order --adapter=mysql --mysql-storage=binary16
+    bin/rails generate uid_attribute:migration Order --mode=new_table
+    bin/rails generate uid_attribute:migration Order --mode=new_table --as-pk
+    bin/rails generate uid_attribute:migration Order --mode=new_table \
+        --extra-columns name:string total:decimal status:string
+    bin/rails generate uid_attribute:migration Order --mode=promote_to_pk
+    bin/rails generate uid_attribute:migration Order --adapter=cassandra
+    bin/rails generate uid_attribute:migration Order --adapter=mongoid
+    bin/rails generate uid_attribute:migration Order --adapter=dynamodb
+    bin/rails generate uid_attribute:migration Order --adapter=couchdb
+
+Options:
+    --mode=MODE                add_column | new_table | promote_to_pk
+    --column=NAME              UUID column name (default: uid)
+    --uuid-version=N           UUID version: 4 or 7 (default: 7)
+    --backfill                 Companion backfill migration
+                               (relational add_column only)
+    --no-concurrent            Disable concurrent index creation (PostgreSQL)
+    --adapter=ADAPTER          Force adapter
+    --mysql-storage=STORAGE    MySQL UUID storage: char36 (default) or binary16
+    --as-pk                    Use UUID column as primary key (new_table)
+    --extra-columns=PAIRS      Extra columns for new_table mode
+                               (e.g., name:string total:decimal)

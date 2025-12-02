@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+# Adds a UUID column to <%= table_name %> as TEXT.
+#
+# SQLite uses TEXT affinity for string columns. SQLite ALTER TABLE is
+# limited (no concurrent index variants); for very large tables consider
+# the table-rebuild pattern (ALTER … RENAME, CREATE TABLE, INSERT … SELECT).
+class <%= add_column_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+  def up
+    unless column_exists?(:<%= table_name %>, :<%= column_name %>)
+      add_column :<%= table_name %>, :<%= column_name %>, :string, limit: 36
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>,
+      unique: true,
+      if_not_exists: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+  end
+
+  def down
+    if index_exists?(:<%= table_name %>, :<%= column_name %>, name: "index_<%= table_name %>_on_<%= column_name %>")
+      remove_index :<%= table_name %>, name: "index_<%= table_name %>_on_<%= column_name %>"
+    end
+    remove_column :<%= table_name %>, :<%= column_name %> if column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+end
