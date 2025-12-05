@@ -1,0 +1,54 @@
+# frozen_string_literal: true
+
+# Creates <%= table_name %> with a UUID column from day one.
+#
+# MySQL UUID storage: <%= mysql_binary16? ? "BINARY(16) — 16 bytes" : "CHAR(36) — 36 bytes, round-trips with UidAttribute::Generator" %>.
+<% if as_pk? -%>
+#
+# When using UUID as primary key, generate the value Ruby-side via
+# UidAttribute::Generator (UUIDv7 keeps inserts B-tree friendly).
+# Include UidAttribute::ActiveRecordIntegration in your model.
+<% end -%>
+class <%= new_table_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+  def change
+<% if as_pk? && mysql_binary16? -%>
+    create_table :<%= table_name %>, id: false do |t|
+      t.binary :id, limit: 16, null: false, primary_key: true
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+<% elsif as_pk? -%>
+    create_table :<%= table_name %>, id: false do |t|
+      t.string :id, limit: 36, null: false, primary_key: true
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+<% elsif mysql_binary16? -%>
+    create_table :<%= table_name %> do |t|
+      t.binary :<%= column_name %>, limit: 16, null: false
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>, unique: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+<% else -%>
+    create_table :<%= table_name %> do |t|
+      t.string :<%= column_name %>, limit: 36, null: false
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>, unique: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+<% end -%>
+  end
+end

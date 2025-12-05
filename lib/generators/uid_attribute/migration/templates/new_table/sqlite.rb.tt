@@ -1,0 +1,33 @@
+# frozen_string_literal: true
+
+# Creates <%= table_name %> with a UUID column from day one.
+<% if as_pk? -%>
+#
+# SQLite stores UUID as TEXT. Generate the value Ruby-side via
+# UidAttribute::Generator. Include UidAttribute::ActiveRecordIntegration
+# and assign uid_attribute :id to keep the PK populated.
+<% end -%>
+class <%= new_table_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+  def change
+<% if as_pk? -%>
+    create_table :<%= table_name %>, id: false do |t|
+      t.string :id, limit: 36, null: false, primary_key: true
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+<% else -%>
+    create_table :<%= table_name %> do |t|
+      t.string :<%= column_name %>, limit: 36, null: false
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>, unique: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+<% end -%>
+  end
+end

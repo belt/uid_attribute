@@ -1,0 +1,33 @@
+# frozen_string_literal: true
+
+# Creates <%= table_name %> with a UUID column from day one.
+<% if as_pk? -%>
+#
+# UUID is the primary key. PostgreSQL generates server-side defaults via
+# gen_random_uuid() (pgcrypto, built-in since PG 13). For UUIDv7 generation
+# in the database, ship a follow-up migration with a custom PL/pgSQL function.
+# Until then, prefer Ruby-side generation via UidAttribute and pass :id => false.
+<% end -%>
+class <%= new_table_class_name %> < ActiveRecord::Migration[<%= migration_version %>]
+  def change
+<% if as_pk? -%>
+    create_table :<%= table_name %>, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+<% else -%>
+    create_table :<%= table_name %> do |t|
+      t.uuid :<%= column_name %>, null: false
+<% extra_column_pairs.each do |name, type| -%>
+      t.<%= type %> :<%= name %>
+<% end -%>
+      t.timestamps
+    end
+
+    add_index :<%= table_name %>, :<%= column_name %>, unique: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>"
+<% end -%>
+  end
+end
