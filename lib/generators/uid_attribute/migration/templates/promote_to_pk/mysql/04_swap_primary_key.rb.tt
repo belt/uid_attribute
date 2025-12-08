@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+# Step 4 of 4 — promote <%= table_name %> primary key from integer to UUID.
+#
+# WARNING: This step rebuilds the clustered index. For high-traffic tables
+# use pt-online-schema-change or gh-ost — see plan.
+#
+# Foreign keys referencing <%= table_name %>(id) MUST be migrated first.
+class Swap<%= table_name.camelize %>PrimaryKeyToUid < ActiveRecord::Migration[<%= migration_version %>]
+  def up
+    execute <<~SQL.squish
+      ALTER TABLE `<%= table_name %>`
+        DROP PRIMARY KEY,
+        ADD PRIMARY KEY (`<%= column_name %>`)
+    SQL
+
+    # Optional: rename the old integer column.
+    # rename_column :<%= table_name %>, :id, :legacy_id
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration,
+      "Swapping primary key back is destructive; restore from backup or " \
+      "follow the rollback procedure in PROMOTE_<%= table_name.upcase %>_TO_UUID_PK.md"
+  end
+end

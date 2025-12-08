@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+# Step 1 of 4 — promote <%= table_name %> primary key from integer to UUID.
+# See PROMOTE_<%= table_name.upcase %>_TO_UUID_PK.md for the full deploy plan.
+#
+# Adds a nullable :uuid column. Safe to run on a live system.
+class AddUidColumnTo<%= table_name.camelize %> < ActiveRecord::Migration[<%= migration_version %>]
+<% if concurrent? -%>
+  disable_ddl_transaction!
+
+<% end -%>
+  def up
+    add_column :<%= table_name %>, :<%= column_name %>, :uuid unless column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+
+  def down
+    remove_column :<%= table_name %>, :<%= column_name %> if column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+end

@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+# Step 4 of 4 — promote <%= table_name %> primary key from integer to UUID.
+#
+# WARNING: This step takes an ACCESS EXCLUSIVE lock on <%= table_name %>.
+# For large tables, prefer the pg_repack-based plan in
+# PROMOTE_<%= table_name.upcase %>_TO_UUID_PK.md (section "Heavy traffic").
+#
+# Drops the old integer primary key constraint and promotes the UUID column
+# to PK. Foreign keys referencing the old integer column MUST be migrated
+# first (see plan).
+class Swap<%= table_name.camelize %>PrimaryKeyToUid < ActiveRecord::Migration[<%= migration_version %>]
+  def up
+    safety_assured do
+      execute <<~SQL.squish
+        ALTER TABLE <%= table_name %>
+          DROP CONSTRAINT IF EXISTS <%= table_name %>_pkey CASCADE
+      SQL
+
+      execute <<~SQL.squish
+        ALTER TABLE <%= table_name %>
+          ADD CONSTRAINT <%= table_name %>_pkey PRIMARY KEY (<%= column_name %>)
+      SQL
+
+      # Optional: rename old integer column for traceability.
+      # rename_column :<%= table_name %>, :id, :legacy_id
+    end
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration,
+      "Swapping primary key back is destructive; restore from backup or " \
+      "follow the rollback procedure in PROMOTE_<%= table_name.upcase %>_TO_UUID_PK.md"
+  end
+
+  private
+
+  def safety_assured
+    if respond_to?(:strong_migrations_safety_assured, true)
+      strong_migrations_safety_assured { yield }
+    else
+      yield
+    end
+  end
+end

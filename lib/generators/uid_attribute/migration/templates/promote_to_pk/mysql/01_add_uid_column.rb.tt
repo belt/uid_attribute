@@ -1,0 +1,19 @@
+# frozen_string_literal: true
+
+# Step 1 of 4 — promote <%= table_name %> primary key from integer to UUID.
+# See PROMOTE_<%= table_name.upcase %>_TO_UUID_PK.md for the full deploy plan.
+#
+# Adds a nullable UUID column. MySQL 8.0+ uses ALGORITHM=INSTANT for adds,
+# so this is fast on large tables. Older versions: use pt-online-schema-change
+# or gh-ost — see plan.
+class AddUidColumnTo<%= table_name.camelize %> < ActiveRecord::Migration[<%= migration_version %>]
+  def up
+    unless column_exists?(:<%= table_name %>, :<%= column_name %>)
+      add_column :<%= table_name %>, :<%= column_name %>, :<%= mysql_binary16? ? "binary, limit: 16" : "string, limit: 36" %>
+    end
+  end
+
+  def down
+    remove_column :<%= table_name %>, :<%= column_name %> if column_exists?(:<%= table_name %>, :<%= column_name %>)
+  end
+end

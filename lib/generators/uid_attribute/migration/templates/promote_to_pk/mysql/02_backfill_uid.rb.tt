@@ -1,0 +1,48 @@
+# frozen_string_literal: true
+
+# Step 2 of 4 — promote <%= table_name %> primary key from integer to UUID.
+#
+# Batched backfill of the UUID column. Uses UidAttribute::Generator (UUIDv<%= uuid_version %>).
+<% if mysql_binary16? -%>
+#
+# Storage is BINARY(16); UUID strings are packed via [str.delete("-")].pack("H*").
+<% end -%>
+class BackfillUidFor<%= table_name.camelize %> < ActiveRecord::Migration[<%= migration_version %>]
+  BATCH_SIZE = <%= batch_size %>
+  UID_VERSION = <%= uuid_version %>
+
+  class <%= class_name %>BackfillRecord < ActiveRecord::Base
+    self.table_name = "<%= table_name %>"
+    self.inheritance_column = :_type_disabled
+  end
+
+  def up
+    require "uid_attribute"
+
+    loop do
+      ids = <%= class_name %>BackfillRecord
+        .where(<%= column_name %>: nil)
+        .limit(BATCH_SIZE)
+        .pluck(:id)
+      break if ids.empty?
+
+      <%= class_name %>BackfillRecord.transaction do
+        ids.each do |id|
+          uid_str = UidAttribute::Generator.generate(version: UID_VERSION)
+<% if mysql_binary16? -%>
+          uid_value = [uid_str.delete("-")].pack("H*")
+<% else -%>
+          uid_value = uid_str
+<% end -%>
+          <%= class_name %>BackfillRecord
+            .where(id: id)
+            .update_all(<%= column_name %>: uid_value)
+        end
+      end
+    end
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration
+  end
+end

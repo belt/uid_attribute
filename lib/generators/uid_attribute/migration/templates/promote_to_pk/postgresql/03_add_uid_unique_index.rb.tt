@@ -1,0 +1,41 @@
+# frozen_string_literal: true
+
+# Step 3 of 4 — promote <%= table_name %> primary key from integer to UUID.
+#
+# Validates uniqueness and locks the column NOT NULL. Run only after step 2
+# is verified complete (SELECT COUNT(*) WHERE <%= column_name %> IS NULL = 0).
+class AddUidUniqueIndexTo<%= table_name.camelize %> < ActiveRecord::Migration[<%= migration_version %>]
+<% if concurrent? -%>
+  disable_ddl_transaction!
+
+<% end -%>
+  def up
+    add_index :<%= table_name %>, :<%= column_name %>,
+      unique: true,
+      <%= concurrent? ? "algorithm: :concurrently,\n      " : "" -%>if_not_exists: true,
+      name: "index_<%= table_name %>_on_<%= column_name %>_unique"
+
+    # NOT NULL must be a separate transaction; concurrent index above
+    # disables the DDL wrapper for this migration.
+    safety_assured do
+      change_column_null :<%= table_name %>, :<%= column_name %>, false
+    end
+  end
+
+  def down
+    if index_exists?(:<%= table_name %>, :<%= column_name %>, name: "index_<%= table_name %>_on_<%= column_name %>_unique")
+      remove_index :<%= table_name %>, name: "index_<%= table_name %>_on_<%= column_name %>_unique"<%= concurrent? ? ", algorithm: :concurrently" : "" %>
+    end
+    change_column_null :<%= table_name %>, :<%= column_name %>, true
+  end
+
+  private
+
+  def safety_assured
+    if respond_to?(:strong_migrations_safety_assured, true)
+      strong_migrations_safety_assured { yield }
+    else
+      yield
+    end
+  end
+end
