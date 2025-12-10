@@ -1,0 +1,36 @@
+# frozen_string_literal: true
+
+# Creates the <%= table_name %> collection in MongoDB with a UUID index.
+#
+# MongoDB creates collections lazily on first write. This migration
+# explicitly creates the collection and builds the unique <%= column_name %> index
+# up front so reads/writes don't pay the cost on the first request.
+#
+# Update <%= class_name %> to include:
+#
+#   include UidAttribute::Poro
+#   field :<%= column_name %>, type: String
+#   uid_attribute :<%= column_name %>, version: <%= uuid_version %>
+#
+# Requires the mongoid_rails_migrations gem.
+class <%= new_table_class_name %> < Mongoid::Migration
+  def self.up
+    client = Mongoid.default_client
+    client.database.command(create: "<%= table_name %>") rescue nil
+
+    coll = client["<%= table_name %>"]
+    coll.indexes.create_one(
+      {<%= column_name %> => 1},
+      unique: true,
+      name: "<%= table_name %>_<%= column_name %>_unique"
+    )
+<% extra_column_pairs.each do |name, _type| -%>
+    # Index hint for :<%= name %> — uncomment if queries filter on it.
+    # coll.indexes.create_one({<%= name %> => 1})
+<% end -%>
+  end
+
+  def self.down
+    Mongoid.default_client["<%= table_name %>"].drop
+  end
+end

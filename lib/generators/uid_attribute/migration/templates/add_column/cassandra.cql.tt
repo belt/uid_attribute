@@ -1,0 +1,19 @@
+-- Adds a UUID column to <%= table_name %>.
+--
+-- Cassandra has native uuid and timeuuid types (16 bytes, native ordering).
+-- For UUIDv7-style time-ordering, use `timeuuid`. For random distribution
+-- across the partition ring, use `uuid`. UidAttribute::Generator emits the
+-- canonical 8-4-4-4-12 string form which CQL accepts directly.
+--
+-- Reference:
+--   https://cassandra.apache.org/doc/latest/cassandra/cql/types.html
+
+ALTER TABLE <%= table_name %>
+  ADD <%= column_name %> <%= uuid_version == 7 ? "timeuuid" : "uuid" %>;
+
+CREATE INDEX IF NOT EXISTS <%= table_name %>_<%= column_name %>_idx
+  ON <%= table_name %> (<%= column_name %>);
+
+-- Note: Cassandra secondary indexes are NOT a substitute for partition keys.
+-- For high-cardinality lookups, denormalize: maintain a separate
+-- <%= table_name %>_by_<%= column_name %> table keyed on <%= column_name %>.

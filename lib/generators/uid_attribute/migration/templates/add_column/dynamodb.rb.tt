@@ -1,0 +1,68 @@
+# frozen_string_literal: true
+
+# Adds a UUID Global Secondary Index (GSI) to the <%= table_name %> table.
+#
+# DynamoDB has no schema beyond the partition/sort keys, so "adding a column"
+# means: store the new attribute on writes, then declare a GSI so it's queryable.
+#
+# This script:
+#   1. Issues UpdateTable with a GSI on <%= column_name %>.
+#   2. Waits for the index to become ACTIVE before returning.
+#
+# Backfill of existing items is NOT included — DynamoDB GSIs auto-populate
+# from existing items as part of UpdateTable. Items written before the GSI
+# was added will have the index entry created lazily on next write, OR you
+# can run a one-time scan-and-update job:
+#
+#   client.scan(table_name: "<%= table_name %>").items.each do |item|
+#     next if item["<%= column_name %>"]
+#     client.update_item(
+#       table_name: "<%= table_name %>",
+#       key: { "id" => item["id"] },
+#       update_expression: "SET #u = :v",
+#       expression_attribute_names: { "#u" => "<%= column_name %>" },
+#       expression_attribute_values: { ":v" => UidAttribute::Generator.generate(version: <%= uuid_version %>) }
+#     )
+#   end
+#
+# Requires the aws-sdk-dynamodb gem.
+require "aws-sdk-dynamodb"
+require "uid_attribute"
+
+class Add<%= column_name.camelize %>To<%= table_name.camelize %>
+  TABLE_NAME = "<%= table_name %>"
+  INDEX_NAME = "<%= table_name %>_<%= column_name %>_index"
+  UID_VERSION = <%= uuid_version %>
+
+  def self.up(client: Aws::DynamoDB::Client.new)
+    client.update_table(
+      table_name: TABLE_NAME,
+      attribute_definitions: [
+        {attribute_name: "<%= column_name %>", attribute_type: "S"}
+      ],
+      global_secondary_index_updates: [
+        {
+          create: {
+            index_name: INDEX_NAME,
+            key_schema: [
+              {attribute_name: "<%= column_name %>", key_type: "HASH"}
+            ],
+            projection: {projection_type: "ALL"}
+          }
+        }
+      ]
+    )
+
+    client.wait_until(:table_exists, table_name: TABLE_NAME)
+    puts "GSI #{INDEX_NAME} created on #{TABLE_NAME}."
+  end
+
+  def self.down(client: Aws::DynamoDB::Client.new)
+    client.update_table(
+      table_name: TABLE_NAME,
+      global_secondary_index_updates: [
+        {delete: {index_name: INDEX_NAME}}
+      ]
+    )
+  end
+end

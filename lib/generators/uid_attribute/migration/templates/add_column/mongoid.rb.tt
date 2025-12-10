@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+# Adds a UUID field to the <%= table_name %> collection (Mongoid).
+#
+# MongoDB collections are schemaless; "adding a field" really means:
+#   1. Declare the field on the model.
+#   2. Backfill existing documents.
+#   3. Build a unique index.
+#
+# This migration backfills + indexes. Update <%= class_name %> to include:
+#
+#   include UidAttribute::Poro
+#   field :<%= column_name %>, type: String
+#   uid_attribute :<%= column_name %>, version: <%= uuid_version %>
+#
+# Requires the mongoid_rails_migrations gem.
+class <%= add_column_class_name %> < Mongoid::Migration
+  BATCH_SIZE = <%= batch_size %>
+  UID_VERSION = <%= uuid_version %>
+
+  def self.up
+    require "uid_attribute"
+
+    coll = Mongoid.default_client["<%= table_name %>"]
+
+    coll.find(<%= column_name %>: {"$exists" => false})
+      .batch_size(BATCH_SIZE)
+      .each do |doc|
+      coll.update_one(
+        {_id: doc[:_id]},
+        {"$set" => {<%= column_name %>: UidAttribute::Generator.generate(version: UID_VERSION)}}
+      )
+    end
+
+    coll.indexes.create_one(
+      {<%= column_name %> => 1},
+      unique: true,
+      name: "<%= table_name %>_<%= column_name %>_unique"
+    )
+  end
+
+  def self.down
+    coll = Mongoid.default_client["<%= table_name %>"]
+    coll.indexes.drop_one("<%= table_name %>_<%= column_name %>_unique")
+    coll.update_many({}, {"$unset" => {<%= column_name %> => ""}})
+  end
+end

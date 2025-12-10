@@ -1,0 +1,73 @@
+# frozen_string_literal: true
+
+# Adds a Mango index on <%= column_name %> for the <%= table_name %> database.
+#
+# CouchDB documents are schemaless — "adding a column" means:
+#   1. Backfill existing documents with a generated <%= column_name %> attribute.
+#   2. Declare a Mango index on <%= column_name %> for queryability.
+#
+# Backfill iterates with _all_docs?include_docs=true and PUTs updates.
+# For very large databases consider _changes feed + a dedicated worker.
+#
+# Set ENV vars: COUCHDB_URL=http://user:pass@host:5984
+#
+# Requires net/http (stdlib) and json.
+require "net/http"
+require "json"
+require "uid_attribute"
+
+class Add<%= column_name.camelize %>To<%= table_name.camelize %>
+  DB_NAME = "<%= table_name %>"
+  INDEX_NAME = "<%= table_name %>_<%= column_name %>_index"
+  BATCH_SIZE = <%= batch_size %>
+  UID_VERSION = <%= uuid_version %>
+
+  def self.up(base_url: ENV.fetch("COUCHDB_URL"))
+    backfill(base_url: base_url)
+    create_index(base_url: base_url)
+  end
+
+  def self.down(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}/_index/_design/#{INDEX_NAME}/json/#{INDEX_NAME}")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      req = Net::HTTP::Delete.new(uri)
+      req.basic_auth(uri.user, uri.password) if uri.user
+      http.request(req)
+    end
+  end
+
+  def self.backfill(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}/_all_docs?include_docs=true&limit=#{BATCH_SIZE}")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      req = Net::HTTP::Get.new(uri)
+      req.basic_auth(uri.user, uri.password) if uri.user
+      response = JSON.parse(http.request(req).body)
+
+      response.fetch("rows", []).each do |row|
+        doc = row["doc"]
+        next if doc["<%= column_name %>"] || doc["_id"].start_with?("_design")
+
+        doc["<%= column_name %>"] = UidAttribute::Generator.generate(version: UID_VERSION)
+        update_uri = URI("#{base_url}/#{DB_NAME}/#{doc["_id"]}")
+        put_req = Net::HTTP::Put.new(update_uri, "Content-Type" => "application/json")
+        put_req.basic_auth(uri.user, uri.password) if uri.user
+        put_req.body = JSON.generate(doc)
+        http.request(put_req)
+      end
+    end
+  end
+
+  def self.create_index(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}/_index")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      req = Net::HTTP::Post.new(uri, "Content-Type" => "application/json")
+      req.basic_auth(uri.user, uri.password) if uri.user
+      req.body = JSON.generate(
+        index: {fields: ["<%= column_name %>"]},
+        name: INDEX_NAME,
+        type: "json"
+      )
+      http.request(req)
+    end
+  end
+end

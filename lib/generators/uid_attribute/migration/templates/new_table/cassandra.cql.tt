@@ -1,0 +1,35 @@
+-- Creates <%= table_name %> with a UUID column from day one.
+--
+-- Cassandra native UUID types: `uuid` (random) or `timeuuid` (time-ordered).
+-- This template uses <%= uuid_version == 7 ? "timeuuid" : "uuid" %>.
+<% if as_pk? -%>
+--
+-- UUID is the partition key. Use `now()` server-side for timeuuid auto-gen,
+-- or generate Ruby-side via UidAttribute::Generator.
+<% end -%>
+
+CREATE TABLE IF NOT EXISTS <%= table_name %> (
+<% if as_pk? -%>
+  <%= column_name %> <%= uuid_version == 7 ? "timeuuid" : "uuid" %>,
+<% extra_column_pairs.each do |name, type| -%>
+  <%= name %> <%= cql_column_type(type) %>,
+<% end -%>
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (<%= column_name %>)
+<% else -%>
+  id bigint,
+  <%= column_name %> <%= uuid_version == 7 ? "timeuuid" : "uuid" %>,
+<% extra_column_pairs.each do |name, type| -%>
+  <%= name %> <%= cql_column_type(type) %>,
+<% end -%>
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (id)
+<% end -%>
+);
+
+<% unless as_pk? -%>
+CREATE INDEX IF NOT EXISTS <%= table_name %>_<%= column_name %>_idx
+  ON <%= table_name %> (<%= column_name %>);
+<% end -%>

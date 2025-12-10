@@ -1,0 +1,62 @@
+# frozen_string_literal: true
+
+# Creates the <%= table_name %> CouchDB database and a Mango index on
+# <%= column_name %>.
+#
+# CouchDB databases are flat document stores keyed on _id. This script:
+#   1. PUT /<%= table_name %> to create the database.
+#   2. POST /<%= table_name %>/_index to declare a Mango index on <%= column_name %>.
+#
+# Set ENV vars: COUCHDB_URL=http://user:pass@host:5984
+#
+<% if as_pk? -%>
+# Use UidAttribute::Generator to produce <%= column_name %> values and set
+# them as the document _id at write time:
+#   doc = { "_id" => UidAttribute::Generator.generate(version: <%= uuid_version %>), ... }
+<% end -%>
+require "net/http"
+require "json"
+require "uid_attribute"
+
+class Create<%= table_name.camelize %>
+  DB_NAME = "<%= table_name %>"
+  INDEX_NAME = "<%= table_name %>_<%= column_name %>_index"
+
+  def self.up(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      put_req = Net::HTTP::Put.new(uri)
+      put_req.basic_auth(uri.user, uri.password) if uri.user
+      response = http.request(put_req)
+
+      unless %w[201 202 412].include?(response.code)
+        raise "Failed to create #{DB_NAME}: #{response.code} #{response.body}"
+      end
+    end
+
+    create_index(base_url: base_url)
+  end
+
+  def self.down(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      del = Net::HTTP::Delete.new(uri)
+      del.basic_auth(uri.user, uri.password) if uri.user
+      http.request(del)
+    end
+  end
+
+  def self.create_index(base_url: ENV.fetch("COUCHDB_URL"))
+    uri = URI("#{base_url}/#{DB_NAME}/_index")
+    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      req = Net::HTTP::Post.new(uri, "Content-Type" => "application/json")
+      req.basic_auth(uri.user, uri.password) if uri.user
+      req.body = JSON.generate(
+        index: {fields: ["<%= column_name %>"]},
+        name: INDEX_NAME,
+        type: "json"
+      )
+      http.request(req)
+    end
+  end
+end
