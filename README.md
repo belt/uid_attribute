@@ -103,6 +103,81 @@ using UidAttribute::CoreExt
 
 Lexically scoped — no global monkey-patching.
 
+## Rails generator: migrations
+
+Generate production-safe UUID migrations from the Rails CLI. The
+generator detects your adapter and emits the appropriate column type,
+index strategy, and lock-management hints.
+
+### Modes
+
+| Mode | Use when |
+| ---- | -------- |
+| `add_column` (default) | Adding a UUID to an existing table |
+| `new_table` | Creating a fresh table with a UUID column |
+| `promote_to_pk` | Migrating an integer primary key to UUID |
+
+### Adapters
+
+| Adapter | Column type | Notes |
+| ------- | ----------- | ----- |
+| `postgresql` | native `:uuid` | concurrent unique index by default |
+| `mysql` | `CHAR(36)` (default) or `BINARY(16)` | online DDL where supported |
+| `sqlite` | TEXT | limited online DDL story documented |
+| `cassandra` | `uuid` or `timeuuid` | emits `.cql` files in `db/cql_migrate/` |
+| `mongoid` | string field | requires `mongoid_rails_migrations` |
+| `dynamodb` | string + GSI | `db/dynamodb_migrate/`, uses `aws-sdk-dynamodb` |
+| `couchdb` | Mango index | `db/couchdb_migrate/`, stdlib `Net::HTTP` |
+
+### Examples
+
+```bash
+# Default: add a :uuid column to orders, with concurrent unique index
+bin/rails generate uid_attribute:migration Order
+
+# Companion backfill migration for existing rows
+bin/rails generate uid_attribute:migration Order --backfill
+
+# UUID v4 instead of v7
+bin/rails generate uid_attribute:migration Order --uuid-version=4
+
+# Custom column name
+bin/rails generate uid_attribute:migration Order --column=public_id
+
+# Force MySQL with binary storage
+bin/rails generate uid_attribute:migration Order \
+  --adapter=mysql --mysql-storage=binary16
+
+# New table with extra columns and UUID as primary key
+bin/rails generate uid_attribute:migration Order \
+  --mode=new_table --as-pk \
+  --extra-columns name:string total:decimal status:string
+
+# Migrate an existing integer PK to UUID (4 migrations + MIGRATION_PLAN.md)
+bin/rails generate uid_attribute:migration Order --mode=promote_to_pk
+
+# NoSQL targets
+bin/rails generate uid_attribute:migration Order --adapter=cassandra
+bin/rails generate uid_attribute:migration Order --adapter=mongoid
+bin/rails generate uid_attribute:migration Order --adapter=dynamodb
+bin/rails generate uid_attribute:migration Order --adapter=couchdb
+```
+
+### `promote_to_pk` deploy plan
+
+The four generated migrations are individually safe; their sequencing
+requires care. A `PROMOTE_<TABLE>_TO_UUID_PK.md` file is written
+alongside the migrations documenting:
+
+- Lock implications per step
+- Coverage and uniqueness verification SQL
+- Heavy-traffic alternatives: `pg_repack` (PostgreSQL),
+  `pt-online-schema-change` and `gh-ost` (MySQL)
+- Foreign key migration patterns for child tables
+- Rollback procedure (step 4 is destructive — restore from backup)
+
+Read the plan before running step 4 in production.
+
 ## UUID Versions
 
 | Version | Source                  | When to use                    |

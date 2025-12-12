@@ -26,4 +26,6 @@ group :development, :test do
   gem "simplecov", "~> 0.22", require: false
   gem "sqlite3", "~> 2.9"
   gem "bundler-audit", "~> 0.9", require: false
+  gem "railties", ">= 7.2", require: false
+  gem "ammeter", "~> 1.1", require: false
 end

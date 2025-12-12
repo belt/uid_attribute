@@ -5,6 +5,36 @@ Notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Rails generator `uid_attribute:migration` for emitting production-safe
+  UUID migrations across PostgreSQL, MySQL, SQLite, Cassandra, Mongoid,
+  DynamoDB, and CouchDB.
+- Three modes: `add_column` (default), `new_table`, `promote_to_pk`
+  (relational adapters only).
+- Adapter-aware column types: PostgreSQL native `:uuid`, MySQL CHAR(36)
+  or BINARY(16), SQLite TEXT, Cassandra `uuid`/`timeuuid`, MongoDB
+  string fields, DynamoDB string attribute + GSI, CouchDB Mango index.
+- Concurrent index creation by default on PostgreSQL
+  (`disable_ddl_transaction!` + `algorithm: :concurrently`).
+- Optional companion backfill migration via `--backfill` for relational
+  `add_column` mode (batched, idempotent, references
+  `UidAttribute::Generator`).
+- Four-step `promote_to_pk` migration set with per-adapter
+  `MIGRATION_PLAN.md` documenting deploy sequence, lock implications,
+  and `pg_repack` / `pt-online-schema-change` / `gh-ost` integration paths.
+- `--extra-columns name:type ...` for `new_table` mode.
+- `--as-pk` for using the UUID column as the primary key.
+- DynamoDB output: `db/dynamodb_migrate/` Ruby scripts using
+  `aws-sdk-dynamodb` for `create_table` / GSI updates.
+- CouchDB output: `db/couchdb_migrate/` Ruby scripts using stdlib
+  `Net::HTTP` to create databases, backfill, and declare Mango indexes.
+- End-to-end integration specs: generated SQLite migrations are loaded
+  and executed against an in-memory database, with assertions on actual
+  column types, indexes, NOT NULL constraints, and backfilled UUID values.
+
 ## [1.0.0] - 2026-05-28
 
 ### Changed

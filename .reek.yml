@@ -29,6 +29,7 @@ detectors:
     exclude:
       - "UidAttribute::Poro"
       - "UidAttribute::Type"
+      - "UidAttribute::Generators::MigrationGenerator"
 
   ControlParameter:
     exclude:
@@ -46,10 +47,12 @@ detectors:
 
   # respond_to? checks are required to support both AR columns and
   # ActiveModel attributes; PORO must verify host-defined accessors.
+  # Generator dispatches to options[:flag] across many helpers.
   ManualDispatch:
     exclude:
       - "UidAttribute::ActiveRecordIntegration"
       - "UidAttribute::Poro"
+      - "UidAttribute::Generators::MigrationGenerator"
 
   # AR class-level state lookup and PORO accessor checks read the
   # same call sites; extracting locals would obscure intent.
@@ -57,6 +60,7 @@ detectors:
     exclude:
       - "UidAttribute::ActiveRecordIntegration"
       - "UidAttribute::Poro"
+      - "UidAttribute::Generators::MigrationGenerator"
 
   # Poro deliberately wraps host #initialize — that's the contract.
   ModuleInitialize:
@@ -69,3 +73,13 @@ detectors:
 
   UnusedPrivateMethod:
     enabled: false
+
+  # Generator naturally has many small helper methods (template variables).
+  TooManyMethods:
+    exclude:
+      - "UidAttribute::Generators::MigrationGenerator"
+
+  # Generator's validate_options! follows Rails convention (bang = raises).
+  MissingSafeMethod:
+    exclude:
+      - "UidAttribute::Generators::MigrationGenerator"
