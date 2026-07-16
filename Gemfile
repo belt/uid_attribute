@@ -23,7 +23,7 @@ end
 group :development, :test do
   gem "rspec", "~> 3.13"
   gem "standard", "~> 1.54", require: false
-  gem "simplecov", "~> 0.22", require: false
+  gem "simplecov", "~> 1.0", require: false
   gem "sqlite3", "~> 2.9"
   gem "bundler-audit", "~> 0.9", require: false
 end
