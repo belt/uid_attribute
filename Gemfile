@@ -4,14 +4,14 @@ source "https://rubygems.org"
 
 gemspec
 
-# CI matrix: AR_VERSION=7.2 or AR_VERSION=8.1 (default: latest)
+# CI matrix: AR_VERSION=8.1 (default: latest)
 ar_version = ENV.fetch("AR_VERSION", nil)
 if ar_version
   gem "activemodel", "~> #{ar_version}.0"
   gem "activerecord", "~> #{ar_version}.0"
   gem "activesupport", "~> #{ar_version}.0"
 else
-  gem "activerecord", ">= 7.2"
+  gem "activerecord", ">= 8.1"
 end
 
 group :development do
@@ -23,7 +23,7 @@ end
 group :development, :test do
   gem "rspec", "~> 3.13"
   gem "standard", "~> 1.54", require: false
-  gem "simplecov", "~> 0.22", require: false
+  gem "simplecov", "~> 1.1", require: false
   gem "sqlite3", "~> 2.9"
   gem "bundler-audit", "~> 0.9", require: false
 end

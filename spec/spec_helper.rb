@@ -2,9 +2,10 @@
 
 require "simplecov"
 SimpleCov.start do
-  add_filter "/spec/"
+  skip "/spec/"
   enable_coverage :branch
-  minimum_coverage line: 90, branch: 70
+  coverage(:line) { minimum 90 }
+  coverage(:branch) { minimum 70 }
 end
 
 require "uid_attribute"

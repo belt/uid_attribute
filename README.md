@@ -117,10 +117,10 @@ the index fragmentation that v4 causes at scale.
 ## Requirements
 
 - Ruby >= 3.4.0 (for `SecureRandom.uuid_v7`, shipped in 3.3+)
-- ActiveModel / ActiveSupport >= 7.2 (runtime)
-- ActiveRecord >= 7.2 (only for `ActiveRecordIntegration`)
+- ActiveModel / ActiveSupport >= 8.1 (runtime)
+- ActiveRecord >= 8.1 (only for `ActiveRecordIntegration`)
 
-Tested against Ruby 3.4 + 4.0 × ActiveRecord 7.2 + 8.1.
+Tested against Ruby 3.4 + 4.0 × ActiveRecord 8.1.
 
 ## License
 
