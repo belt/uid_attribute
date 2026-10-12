@@ -1,15 +1,18 @@
-# mise.toml — uid_attribute gem
-# Project-scoped tool versions and environment
+# Project-scoped tool versions and local native-build settings
 min_version = "2025.1.0"
 
 [tools]
-ruby = "3.4.9"
+ruby = "4.0.7"
 
 [env]
-# Force Apple Clang for Ruby builds — Homebrew LLVM lacks
-# RUBY_FUNCTION_NAME_STRING, causing vm_callinfo.h failures
+# Use Apple Clang for native extensions on this macOS host; Homebrew LLVM
+# has caused MRI header incompatibilities.
 CC = "/usr/bin/clang"
 CXX = "/usr/bin/clang++"
 
-# jemalloc tuning (optimal for Ruby workloads)
+# Keep RUBYOPT unset: globally freezing strings affects dependencies such as
+# Rantly. Use per-file frozen_string_literal pragmas for project-owned code.
+
+# Used only when the process loads jemalloc; the macOS Ruby build normally uses
+# the system allocator. Keep aligned with the other projects' jemalloc tuning.
 MALLOC_CONF = "dirty_decay_ms:1000,narenas:2"
