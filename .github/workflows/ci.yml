@@ -3,7 +3,7 @@
 # Actions pinned to full SHA for supply-chain safety.
 # Concurrency: cancel stale runs on same branch/PR.
 #
-# Matrix: Ruby 3.4 + 4.0 × ActiveRecord 7.2 + 8.1
+# Matrix: Ruby 3.4 + 4.0 × ActiveRecord 8.1
 # AR_VERSION env var pins activerecord/activesupport in Gemfile.
 ---
 name: CI
@@ -53,10 +53,7 @@ jobs:
       fail-fast: false
       matrix:
         ruby: ["3.4", "4.0"]
-        ar: ["7.2", "8.1"]
-        exclude:
-          - ruby: "4.0"
-            ar: "7.2"
+        ar: ["8.1"]
     env:
       AR_VERSION: ${{ matrix.ar }}
     steps:

@@ -32,6 +32,6 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activemodel", ">= 7.2"
-  spec.add_dependency "activesupport", ">= 7.2"
+  spec.add_dependency "activemodel", ">= 8.1"
+  spec.add_dependency "activesupport", ">= 8.1"
 end

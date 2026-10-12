@@ -5,6 +5,14 @@ Notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Required ActiveModel, ActiveSupport, and ActiveRecord bumped to `>= 8.1`;
+  Rails 7.2 has reached end of security support.
+- CI now tests ActiveRecord 8.1 instead of the EOL 7.2 series.
+
 ## [1.0.0] - 2026-05-28
 
 ### Changed

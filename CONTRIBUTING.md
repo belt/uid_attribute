@@ -18,6 +18,7 @@ All participants are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md
 ### Prerequisites
 
 - Ruby 3.4 or newer (CI matrix: 3.4 and 4.0)
+- ActiveRecord 8.1 or newer (CI matrix: 8.1)
 - Bundler
 - SQLite 3 (used by the in-memory ActiveRecord test harness)
 
